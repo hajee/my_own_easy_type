@@ -4,7 +4,7 @@ module Puppet
   newtype(:custom_package) do
     include EasyType
 
-    set_command(:rpm)
+    set_command [:rpm, :yum]
 
     ensurable
 
@@ -13,8 +13,10 @@ module Puppet
       convert_csv_data_to_hash(packages_string,[:name, :version])
     end
 
-    on_create do
-      # What do we do to create a resource
+    on_create do |command_builder|
+      command_builder.add do
+        yum "install -y #{name}"
+      end
     end
 
     on_modify do
@@ -34,6 +36,23 @@ module Puppet
       end
 
     end
+
+    newproperty(:version) do
+      include EasyType
+
+      on_apply do |command_builder| 
+        command_builder.append do
+          "-#{version}"
+        end
+      end
+
+
+      to_translate_to_resource do | raw_resource|
+        raw_resource.column_data(:version)
+      end
+
+    end
+
 
   end
 end
